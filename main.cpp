@@ -11,15 +11,11 @@ namespace {
     class Minesweeper {
 
     public:
-        Minesweeper(const size_t width, const size_t height, const int bomb)
-                : width(width), height(height), mines(bomb), size(width * height),
-                  table(new char[size]), playerTable(new char[size]),
-                  endGame(false), unrevealed(size) { fillTable(); }
 
-        virtual ~Minesweeper() {
-            delete[] table;
-            delete[] playerTable;
-        }
+        Minesweeper(const size_t width, const size_t height, const int bomb)
+            : width(width), height(height), mines(bomb), size(width * height),
+              table(new char[size]), playerTable(new char[size]),
+              endGame(false), unrevealed(size) { fillTable(); }
 
 
         void printTable() const {
@@ -41,7 +37,7 @@ namespace {
 
         bool isGameEnd() const { return endGame; }
 
-        bool win() { return unrevealed == mines; }
+        bool win() const { return unrevealed == mines; }
 
         void reveal(size_t x, size_t y) {
 
@@ -69,6 +65,11 @@ namespace {
                 endGame = true;
                 std::cout <<"\nCONGRATS! YOU WON!\n";
             }
+        }
+
+        virtual ~Minesweeper() {
+            delete[] table;
+            delete[] playerTable;
         }
 
     private:
