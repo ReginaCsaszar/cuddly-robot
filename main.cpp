@@ -13,53 +13,70 @@ namespace {
     public:
         Minesweeper(const size_t width, const size_t height, const int bomb)
                 : width(width), height(height), mines(bomb), size(width * height),
-                  table(new char[size]), playerTable(new char[size]), exploded(false) { fillTables(); }
+                  table(new char[size]), playerTable(new char[size]),
+                  endGame(false), unrevealed(size) { fillTable(); }
 
         virtual ~Minesweeper() {
             delete[] table;
             delete[] playerTable;
         }
 
-0
+
         void printTable() const {
-            std::cout <<"\nTable:\n";
+            std::cout <<"\nTable:\n\n     ";
+            for (int i = 1; i <= width; ++i) { std::cout << i << " "; }
+            std::cout << "\n   ";
             for (int i = 0; i <= width; ++i) { std::cout << "--"; }
-            std::cout << "-\n";
+            std::cout << "-\n ";
             for (int y = 0; y < height; y++) {
-                std::cout << "| ";
+                std::cout << y+1 << " | ";
                 for(int x = 0; x < width; x++) { std::cout << playerTable[y*width+x] <<" "; }
                 std::cout << "|\n";
+                if (y < 8) std::cout << " ";
             }
+            std::cout << "   ";
             for (int i = 0; i <= width; ++i) { std::cout << "--"; }
-            std::cout << "-";
+            std::cout << "-\n";
         }
 
-        bool isExploded() const { return exploded; }
+        bool isGameEnd() const { return endGame; }
+
+        bool win() { return unrevealed == mines; }
 
         void reveal(size_t x, size_t y) {
+
+            if (!isInside(x, y)) {
+                std::cout <<"\nInvalid coordinates!\n";
+                return;
+            }
 
             size_t index = getCoordinate(x, y);
             char *field = &table[index];
 
             if ( *field == mine) {
                 playerTable[index] = mine;
-                exploded = true;
+                endGame = true;
                 std::cout <<"\nBOOOM! YOU DIED!\n";
             } else if ( *field == '0') {
-                playerTable[index] = space;
                 revealNeighbors(x, y);
             } else {
                 playerTable[index] = *field;
+                unrevealed--;
             }
             printTable();
+
+            if (win()) {
+                endGame = true;
+                std::cout <<"\nCONGRATS! YOU WON!\n";
+            }
         }
 
     private:
 
-        void fillTables() {
+        void fillTable() {
 
             memset(table, zero, size);
-            //5memset(playerTable, '.', size);
+            //memset(playerTable, '.', size);
 
             std::random_device rd;
             std::mt19937_64 gen(rd());
@@ -109,36 +126,44 @@ namespace {
                     if (table[neighbor] == zero) {
                         if (playerTable[neighbor] != space) {
                             playerTable[neighbor] = space;
+                            unrevealed--;
                             revealNeighbors(x+j, y+i);
                             }
                     } else {
-                        playerTable[neighbor] = table[neighbor];
+                        if (playerTable[neighbor] != table[neighbor]) {
+                            playerTable[neighbor] = table[neighbor];
+                            unrevealed--;
+                        }
                     }
                 }
             }
         }
 
         const size_t width, height, size;
+        size_t unrevealed;
         const int mines;
-        bool exploded;
+        bool endGame;
         char* table;
         char* playerTable;
     };
 }
 
 int main() {
+
     std::cout <<"\nWelcome!";
     try {
-        Minesweeper ms(10, 10, 15);
+        Minesweeper ms(10, 10, 5);
+        std::cout <<"\nYour task is leave only the mines unrevealed!\n";
+        ms.printTable();
         size_t x, y;
 
         do {
-            std::cout <<"\n\nx: ";
+            std::cout <<"\nx: ";
             std::cin >> x;
             std::cout <<"y: ";
             std::cin >> y;
-            ms.reveal(x, y);
-        } while (!ms.isExploded());
+            ms.reveal(x-1, y-1);
+        } while (!ms.isGameEnd());
 
     } catch (const std::bad_alloc &e) {
         std::cerr << "Couldn't allocate enough memory for minesweeper table" << std::endl;
