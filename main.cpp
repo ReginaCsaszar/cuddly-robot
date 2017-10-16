@@ -5,15 +5,16 @@
 namespace {
 
     const char mine = '*';
+    const char zero = '0';
     const char space = ' ';
 
     class Minesweeper {
 
     public:
         Minesweeper(const size_t width, const size_t height, const int bomb)
-                : width(width), height(height), mines(bomb),
-                  table(new char[width * height]), playerTable(new char[width * height]) {
-            fillTable();
+                : width(width), height(height), mines(bomb), size(width * height),
+                  table(new char[size]), playerTable(new char[size]) {
+            fillTables();
         }
 
         virtual ~Minesweeper() {
@@ -58,11 +59,10 @@ namespace {
 
     private:
 
-        void fillTable() {
+        void fillTables() {
 
-            size_t size = width * height;
-
-            memset(table, space, size);
+            memset(table, zero, size);
+            memset(playerTable, space, size);
 
             std::random_device rd;
             std::mt19937_64 gen(rd());
@@ -74,42 +74,35 @@ namespace {
                 size_t place = randIndex(gen);
                 if(table[place] != mine) {
                     table[place] = mine;
+                    countNeighbours(place);
                     mineCount++;
                 }
             } while (mineCount < mines);
-
-            countNeighbours();
         }
 
-        void countNeighbours() {
+        void countNeighbours(size_t index) {
 
-            for(int y = 0; y < height; y++) {
+            size_t x = index%width-1;
+            size_t y = index >= width ? (index - (x))/width-1 : 0;
 
-                for(int x = 0; x < width; x++) {
-
-                    if (table[y*width+x] != mine) {
-
-                        int mineCount = 0;
-                        if (table[(y-1)*width+x] == mine) { mineCount++;}
-                        if (table[(y+1)*width+x] == mine) { mineCount++;}
-
-                        if (x > 0) {
-                            if (table[(y-1)*width+x-1] == mine) { mineCount++;}
-                            if (table[y*width+x-1] == mine) { mineCount++;}
-                            if (table[(y+1)*width+x-1] == mine) { mineCount++;}
-                        }
-
-                        if (x < width-1) {
-                            if (table[(y-1)*width+x+1]== mine) { mineCount++ ;}
-                            if (table[y*width+x+1]== mine) { mineCount++ ;}
-                            if (table[(y+1)*width+x+1]== mine) { mineCount++ ;}
-                        }
-
-                        table[y*width+x] = mineCount +'0';
+            for (int i = 0; i < 3; i++) {
+                if (y+i >= height) break;
+                if (y+i >= 0) {
+                    for (int j = 0; j < 3; j++) {
+                        size_t neighbor = getCoordinate(x+j, y+i);
+                        if (isMine(neighbor)) continue;
+                        if ((x+j >= 0)&&(x+j < width)) setField(neighbor);
                     }
                 }
+                if ((i == 1)&&(index < (width))) break;
             }
         }
+
+        void setField(size_t index) { table[index] = table[index] - '0' + 1 + '0'; }
+
+        bool isMine(size_t index) { return table[index] == mine; }
+
+        size_t getCoordinate(size_t x, size_t y){ return y*width+x; }
 
         void revealNeighboors(size_t x, size_t y) {
 
@@ -154,7 +147,7 @@ namespace {
             }
         }
 
-        const size_t width, height;
+        const size_t width, height, size;
         const int mines;
         char* table;
         char* playerTable;
