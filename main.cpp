@@ -20,6 +20,7 @@ namespace {
             delete[] playerTable;
         }
 
+0
         void printTable() const {
             std::cout <<"\nTable:\n";
             for (int i = 0; i <= width; ++i) { std::cout << "--"; }
