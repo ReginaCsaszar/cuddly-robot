@@ -26,7 +26,7 @@ namespace {
             std::cout << "-\n";
             for (int y = 0; y < height; y++) {
                 std::cout << "| ";
-                for(int x = 0; x < width; x++) { std::cout << table[y*width+x] <<" "; }
+                for(int x = 0; x < width; x++) { std::cout << playerTable[y*width+x] <<" "; }
                 std::cout << "|\n";
             }
             for (int i = 0; i <= width; ++i) { std::cout << "--"; }
