@@ -49,23 +49,26 @@ namespace {
             size_t index = getCoordinate(x, y);
             char *field = &table[index];
 
-            if ( *field == mine) {
+            if (*field == mine) {
                 playerTable[index] = mine;
                 endGame = true;
                 std::cout <<"\nBOOOM! YOU DIED!\n";
-            } else if ( *field == '0') {
+                solve();
+            } else if (*field == '0') {
                 revealNeighbors(x, y);
             } else {
                 playerTable[index] = *field;
                 unrevealed--;
             }
-            printTable();
 
             if (win()) {
                 endGame = true;
                 std::cout <<"\nCONGRATS! YOU WON!\n";
+                solve();
             }
+            printTable();
         }
+
 
         virtual ~Minesweeper() {
             delete[] table;
@@ -77,7 +80,6 @@ namespace {
         void fillTable() {
 
             memset(table, zero, size);
-            //memset(playerTable, '.', size);
 
             std::random_device rd;
             std::mt19937_64 gen(rd());
@@ -89,27 +91,27 @@ namespace {
                 size_t place = randIndex(gen);
                 if(table[place] != mine) {
                     table[place] = mine;
-                    countNeighbours(place);
+                    setNeighbours(place);
                     mineCount++;
                 }
             } while (mineCount < mines);
         }
 
-        void countNeighbours(size_t index) {
+        void setNeighbours(size_t index) {
 
             size_t x = index%width;
             size_t y = (index >= width) ? (index-x)/width : 0;
             for (int i = -1; i < 2; i++) {
                 for (int j = -1; j < 2; j++) {
                     if (!isInside(x+j, y+i)) continue;
-                    size_t neighbor = getCoordinate(x+j, y+i);
-                    if (isMine(neighbor)) continue;
-                    setField(neighbor);
+                    size_t field = getCoordinate(x+j, y+i);
+                    if (isMine(field)) continue;
+                    incrementValue(field);
                 }
             }
         }
 
-        void setField(size_t index) { table[index] = table[index] - '0' + 1 + '0'; }
+        void incrementValue(size_t index) { table[index] = table[index] - '0' + 1 + '0'; }
 
         bool isMine(size_t index) { return table[index] == mine; }
 
@@ -129,14 +131,22 @@ namespace {
                             playerTable[neighbor] = space;
                             unrevealed--;
                             revealNeighbors(x+j, y+i);
-                            }
-                    } else {
-                        if (playerTable[neighbor] != table[neighbor]) {
+                        }
+                    } else if (playerTable[neighbor] != table[neighbor]) {
                             playerTable[neighbor] = table[neighbor];
                             unrevealed--;
-                        }
+
                     }
                 }
+            }
+        }
+
+        void solve() {
+
+            for (size_t i=0; i<size; i++) {
+                if (playerTable[i] == space || playerTable[i] == table[i]) continue;
+                if (table[i] == zero) { playerTable[i] = space; }
+                else { playerTable[i] = table[i]; }
             }
         }
 
@@ -153,7 +163,7 @@ int main() {
 
     std::cout <<"\nWelcome!";
     try {
-        Minesweeper ms(10, 10, 5);
+        Minesweeper ms(10, 10, 15);
         std::cout <<"\nYour task is leave only the mines unrevealed!\n";
         ms.printTable();
         size_t x, y;
